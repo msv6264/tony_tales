@@ -1,14 +1,19 @@
+import cohere
+import secrets
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import requests
+from dotenv import load_dotenv 
 import os
 
-app = Flask(__name__)
-CORS(app, origins=["http://localhost:5173", "http://localhost:5173"], supports_credentials=True)
+load_dotenv()
 
-API_URL = "https://api-inference.huggingface.co/models/gpt2-large"
-HF_API_TOKEN = os.getenv('HF_API_TOKEN')
-headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+app = Flask(__name__)
+app.secret_key = secrets.token_hex(16)
+
+key = os.getenv('COHERE_API_KEY')
+co = cohere.Client(key)
+
+CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 mood_prompts = {
     "smile": "Write a joyful story.",
@@ -18,27 +23,21 @@ mood_prompts = {
     "crying": "Tell a touching story about someone finding hope in sadness.",
 }
 
-def query(inputMood):
-    response = requests.post(API_URL, headers=headers, json=inputMood)
-    return response.json()
-
 def generate_story(prompt):
-    response = query({"inputs": prompt})
-    return response[0]['generated_text']
+    response = co.generate(
+        model='command',
+        prompt=prompt,
+        temperature=0.8
+    )
+    return response.generations[0].text.strip()
 
 @app.route('/data', methods=["POST"])
 def sending():
     data = request.get_json()
     emoji = data.get("emojiName", "")
-    input_prompt = mood_prompts[emoji]
+    input_prompt = mood_prompts.get(emoji, "Write a story.")
     story = generate_story(input_prompt)
     return jsonify({"Story": story})
-
-# @app.route('/data', methods=["POST"])
-# def sending():
-#     data = request.get_json()
-#     emoji = data.get("emojiName", "")
-#     return jsonify({"Story": f"You have choosen {emoji}"})
 
 if __name__ == "__main__":
     app.run(debug=True)

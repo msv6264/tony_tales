@@ -44,7 +44,7 @@ export default function SecPage() {
         <img className="h-[60px] ms:h-[80px] " src={path} alt={mood} />
       </div>
 
-      <div className="bg-[#d4c7e6] m-auto rounded-[15px] mt-10 w-[80%] h-[40%] p-5 text-[#130542] font-KottaOne sm:text-[20px] ms:text-[25px] ">
+      <div className="bg-[#d4c7e6] m-auto rounded-[15px] mt-10 w-[80%] h-[40%] p-5 text-[#130542] font-KottaOne sm:text-[20px] ms:text-[25px] overflow-y-auto ">
         {data.story}
       </div>
 
