@@ -1,59 +1,138 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import play from "../assets/play.png";
+import pause from "../assets/pause.png";
 
 export default function SecPage() {
   const location = useLocation();
   const { mood, path } = location.state || {};
   const navigate = useNavigate();
 
-  const handleClick = (() => {
-    navigate("/")
-  })
-  
-  // Initializing state to store story data received from the backend
-  const [data, setdata] = useState({
-    story: ""
-  });
+  const [story, setStory] = useState("");
+  const [generated, setGenerated] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedVoice, setSelectedVoice] = useState(null);
 
+  // Fetch story from backend
   useEffect(() => {
-    // Fetching story data from backend and updating state
-    fetch("http://localhost:5000/data", {
-      method: "POST", // Telling backend that we're sending data (not just requesting)
+    const apiUrl = "http://localhost:5000/data";
+
+    fetch(apiUrl, {
+      method: "POST",
       headers: {
-        "Content-Type": "application/json" // Informing backend that the request body is JSON
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ emojiName: mood }) // Converting JavaScript object to JSON string before sending
+      body: JSON.stringify({ emojiName: mood }),
     })
-      .then((res) => res.json()) // Waiting for backend response and parsing it as JSON
+      .then((res) => res.json())
       .then((data) => {
-        setdata({ story: data.Story }); // Updating state with the story from the response
-      });
-  }, [mood]); // Runs once when the component mounts, or whenever 'mood' changes
+        setStory(data.Story);
+        setGenerated(true);
+      })
+      .catch((err) => {
+        console.error("Error fetching story:", err);
+        setStory("Oops! Couldn't load the story. Try again later.");
+      })
+      .finally(() => setLoading(false));
+  }, [mood]);
+
+  // Load voices and set default
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+
+    const loadVoices = () => {
+      const voices = synth.getVoices();
+      if (voices.length > 0) {
+        const preferred = voices.find((v) => v.lang.startsWith("en") && v.name.includes("Google")) || voices[0];
+        setSelectedVoice(preferred);
+      }
+    };
+
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = loadVoices;
+    }
+
+    loadVoices(); // also call initially
+  }, []);
+
+  // Stop speaking on unmount
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const handleNarration = () => {
+    if (!isPlaying && generated && story && selectedVoice) {
+      const utterance = new SpeechSynthesisUtterance(story);
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang;
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      utterance.onend = () => {
+        setIsPlaying(false);
+        console.log("Speech finished.");
+      };
+
+      utterance.onerror = (e) => {
+        console.error("Speech error:", e.error);
+        setIsPlaying(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
+      setIsPlaying(true);
+      console.log("Speaking...");
+    } else {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      console.log("Stopped speaking.");
+    }
+  };
+
+  const handleClick = () => {
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+    navigate("/");
+  };
 
   return (
-    <div className="bg-[#e8dbec] w-full h-screen p-5 ">
-      <div className="text-[#130542] ml-[44%] font-KottaOne sm:text-[20px] ms:text-[25px]">
-        Mood chosen
+    <div className="bg-[#e8dbec] w-full min-h-screen p-5">
+      <div className="flex flex-col m-auto w-52">
+        <div className="text-[#130542] font-KottaOne sm:text-[20px] ms:text-[25px]">
+          Mood chosen
+        </div>
+        <div className="bg-[#d4c7e6] w-[100px] h-[100px] ms:w-[120px] ms:h-[120px] mt-[2%] rounded-[15px] drop-shadow-lg cursor-pointer 
+          transition duration-200 flex justify-center items-center">
+          <img className="h-[60px] ms:h-[80px]" src={path} alt={mood} />
+        </div>
       </div>
 
-      <div
-        key={mood}
-        className={`bg-[#d4c7e6] w-[100px] h-[100px] ms:w-[120px] ms:h-[120px] m-auto mt-[2%] rounded-[15px] drop-shadow-lg cursor-pointer 
-  transition duration-200 flex justify-center items-center`}
-      >
-        <img className="h-[60px] ms:h-[80px] " src={path} alt={mood} />
+      <div className="bg-[#d4c7e6] m-auto rounded-[15px] mt-10 w-[80%] h-[40%] p-5 text-[#130542] font-KottaOne sm:text-[20px] ms:text-[25px] overflow-y-auto">
+        {loading ? "Loading story..." : story}
       </div>
 
-      <div className="bg-[#d4c7e6] m-auto rounded-[15px] mt-10 w-[80%] h-[40%] p-5 text-[#130542] font-KottaOne sm:text-[20px] ms:text-[25px] overflow-y-auto ">
-        {data.story}
-      </div>
-
-      <div>
+      <div className="flex flex-col small:flex-row justify-center items-center gap-2 small:gap-32 w-full mt-4">
         <div
-          className="text-white font-KottaOne bg-[#563c79] h-16 w-[35%]  sm:w-[25%] ms:w-[15%] m-auto flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75"
+          className="text-white font-KottaOne bg-[#563c79] h-10 small:h-16 w-[140px] sm:h-[14] sm:w-[20%] ms:w-[15%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.3rem] hover:border-black transition duration-200 filter active:brightness-75"
           onClick={handleClick}
         >
           Change mood
+        </div>
+
+        <div
+          className="w-[40px] ms:w-[100px] mt-4 sm:w-[80px] small:w-[70px] cursor-pointer"
+          onClick={handleNarration}
+        >
+          <img src={isPlaying ? pause : play} alt="play/pause" />
+        </div>
+
+        <div
+          className="text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75"
+          onClick={handleNarration}
+        >
+          Want Tony to narrate?
         </div>
       </div>
     </div>
