@@ -63,7 +63,7 @@ export default function SecPage() {
     };
   }, []);
 
-  const handleNarration = () => {
+  const handleNarration = (stateofVoice) => {
     const synth = window.speechSynthesis;
   
     if (!isPlaying && generated && story && selectedVoice) {
@@ -85,24 +85,21 @@ export default function SecPage() {
         setIsPaused(false);
       };
   
-      // Store utterance in ref
-      utteranceRef.current = utterance;
+      utteranceRef.current = utterance; 
       synth.speak(utterance);
       setIsPlaying(true);
       setIsPaused(false);
       console.log("Speaking...");
-    } else if (isPlaying && !isPaused) {
-      // Pause current speech
-      synth.pause();
+    } else if (stateofVoice === "pause" && isPlaying && !isPaused) {
+      synth.pause(utteranceRef);
       setIsPaused(true);
       console.log("Speech paused.");
-    } else if (isPlaying && isPaused) {
-      // Resume current speech
-      synth.resume();
+    } else if (stateofVoice === "play" && isPlaying && isPaused) {
+      synth.resume(utteranceRef);
       setIsPaused(false);
       console.log("Speech resumed.");
     }
-  };  
+  };   
 
   const handleClick = () => {
     window.speechSynthesis.cancel();
@@ -137,14 +134,14 @@ export default function SecPage() {
 
         <div
           className="w-[40px] ms:w-[100px] mt-4 sm:w-[80px] small:w-[70px] cursor-pointer"
-          onClick={handleNarration}
+          onClick={() => handleNarration(isPlaying && !isPaused ? "pause" : "play")}
         >
           <img src={isPlaying && !isPaused ? pause : play} alt="play/pause" />
         </div>
 
         <div
           className="text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75"
-          onClick={handleNarration}
+          onClick={() => handleNarration(isPlaying && !isPaused ? "pause" : "play")}
         >
           Want Tony to narrate?
         </div>
