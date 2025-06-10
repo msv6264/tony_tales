@@ -13,7 +13,7 @@ export default function SecPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState(null);
-  const utteranceRef = useRef(null);
+  const [isDisabled, setIsDisabled] = useState(false);
 
   // Fetching story from backend
   useEffect(() => {
@@ -63,8 +63,9 @@ export default function SecPage() {
     };
   }, []);
 
-  const handleNarration = (stateofVoice) => {
-    const synth = window.speechSynthesis;
+  const handleNarration = () => {
+    setIsDisabled(true);
+    setIsPaused(false);
   
     if (!isPlaying && generated && story && selectedVoice) {
       const utterance = new SpeechSynthesisUtterance(story);
@@ -75,31 +76,35 @@ export default function SecPage() {
   
       utterance.onend = () => {
         setIsPlaying(false);
-        setIsPaused(false);
         console.log("Speech finished.");
       };
-  
+
       utterance.onerror = (e) => {
         console.error("Speech error:", e.error);
         setIsPlaying(false);
-        setIsPaused(false);
       };
-  
-      utteranceRef.current = utterance; 
-      synth.speak(utterance);
+
+      window.speechSynthesis.speak(utterance);
       setIsPlaying(true);
-      setIsPaused(false);
       console.log("Speaking...");
-    } else if (stateofVoice === "pause" && isPlaying && !isPaused) {
-      synth.pause(utteranceRef);
-      setIsPaused(true);
-      console.log("Speech paused.");
-    } else if (stateofVoice === "play" && isPlaying && isPaused) {
-      synth.resume(utteranceRef);
-      setIsPaused(false);
-      console.log("Speech resumed.");
+    } else {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+      console.log("Stopped speaking.");
     }
-  };   
+  };
+
+  const handlePause = () => {
+    window.speechSynthesis.resume();
+    setIsPaused(false);
+    console.log("Speech resumed.");
+  }
+
+  const handlePlay = () => {
+    window.speechSynthesis.pause();
+    setIsPaused(true);
+    console.log("Speech paused.");
+  }
 
   const handleClick = () => {
     window.speechSynthesis.cancel();
@@ -134,14 +139,24 @@ export default function SecPage() {
 
         <div
           className="w-[40px] ms:w-[100px] mt-4 sm:w-[80px] small:w-[70px] cursor-pointer"
-          onClick={() => handleNarration(isPlaying && !isPaused ? "pause" : "play")}
+          onClick={() => {
+            if (isPlaying) {
+              isPaused ? handlePause() : handlePlay();
+            }
+          }}          
         >
           <img src={isPlaying && !isPaused ? pause : play} alt="play/pause" />
         </div>
 
         <div
-          className="text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75"
-          onClick={() => handleNarration(isPlaying && !isPaused ? "pause" : "play")}
+          className={`text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75
+            ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}          
+          onClick={() => {
+            if (story && !isDisabled) {
+              handleNarration();
+              setIsDisabled(true);
+            }
+          }}          
         >
           Want Tony to narrate?
         </div>
