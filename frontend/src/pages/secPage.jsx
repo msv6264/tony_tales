@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import play from "../assets/play.png";
 import pause from "../assets/pause.png";
@@ -7,28 +7,29 @@ export default function SecPage() {
   const location = useLocation();
   const { mood, path } = location.state || {};
   const navigate = useNavigate();
-
   const [story, setStory] = useState("");
   const [generated, setGenerated] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const utteranceRef = useRef(null);
 
-  // Fetch story from backend
+  // Fetching story from backend
   useEffect(() => {
     const apiUrl = "http://localhost:5000/data";
 
     fetch(apiUrl, {
-      method: "POST",
+      method: "POST", //we are not only requesting data but also sending some
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ emojiName: mood }),
+      body: JSON.stringify({ emojiName: mood }), //sending in JSON format
     })
-      .then((res) => res.json())
+      .then((res) => res.json()) //if story is fetched convert it into json format
       .then((data) => {
-        setStory(data.Story);
-        setGenerated(true);
+        setStory(data.Story); //in setStory we are storing story
+        setGenerated(true); //setting generated as true
       })
       .catch((err) => {
         console.error("Error fetching story:", err);
@@ -37,14 +38,14 @@ export default function SecPage() {
       .finally(() => setLoading(false));
   }, [mood]);
 
-  // Load voices and set default
+  // Loading voices and set default
   useEffect(() => {
     const synth = window.speechSynthesis;
 
     const loadVoices = () => {
-      const voices = synth.getVoices();
-      if (voices.length > 0) {
-        const preferred = voices.find((v) => v.lang.startsWith("en") && v.name.includes("Google")) || voices[0];
+      const voices = synth.getVoices(); // fetching all voices
+      if (voices.length > 0) { //if we get some voices
+        const preferred = voices.find((v) => v.lang.startsWith("en") && v.name.includes("Google")) || voices[0]; // prefered voice will be google and englih language
         setSelectedVoice(preferred);
       }
     };
@@ -53,10 +54,9 @@ export default function SecPage() {
       synth.onvoiceschanged = loadVoices;
     }
 
-    loadVoices(); // also call initially
+    loadVoices(); 
   }, []);
 
-  // Stop speaking on unmount
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
@@ -64,35 +64,49 @@ export default function SecPage() {
   }, []);
 
   const handleNarration = () => {
+    const synth = window.speechSynthesis;
+  
     if (!isPlaying && generated && story && selectedVoice) {
       const utterance = new SpeechSynthesisUtterance(story);
       utterance.voice = selectedVoice;
       utterance.lang = selectedVoice.lang;
       utterance.rate = 1;
       utterance.pitch = 1;
-
+  
       utterance.onend = () => {
         setIsPlaying(false);
+        setIsPaused(false);
         console.log("Speech finished.");
       };
-
+  
       utterance.onerror = (e) => {
         console.error("Speech error:", e.error);
         setIsPlaying(false);
+        setIsPaused(false);
       };
-
-      window.speechSynthesis.speak(utterance);
+  
+      // Store utterance in ref
+      utteranceRef.current = utterance;
+      synth.speak(utterance);
       setIsPlaying(true);
+      setIsPaused(false);
       console.log("Speaking...");
-    } else {
-      window.speechSynthesis.cancel();
-      setIsPlaying(false);
-      console.log("Stopped speaking.");
+    } else if (isPlaying && !isPaused) {
+      // Pause current speech
+      synth.pause();
+      setIsPaused(true);
+      console.log("Speech paused.");
+    } else if (isPlaying && isPaused) {
+      // Resume current speech
+      synth.resume();
+      setIsPaused(false);
+      console.log("Speech resumed.");
     }
-  };
+  };  
 
   const handleClick = () => {
     window.speechSynthesis.cancel();
+    utteranceRef.current = null;
     setIsPlaying(false);
     navigate("/");
   };
@@ -125,7 +139,7 @@ export default function SecPage() {
           className="w-[40px] ms:w-[100px] mt-4 sm:w-[80px] small:w-[70px] cursor-pointer"
           onClick={handleNarration}
         >
-          <img src={isPlaying ? pause : play} alt="play/pause" />
+          <img src={isPlaying && !isPaused ? pause : play} alt="play/pause" />
         </div>
 
         <div

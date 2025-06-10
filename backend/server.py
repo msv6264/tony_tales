@@ -16,11 +16,11 @@ co = cohere.Client(key)
 CORS(app, origins=["http://localhost:5173"], supports_credentials=True)
 
 mood_prompts = {
-    "smile": "Write a joyful story.",
-    "neutral": "Describe a peaceful evening by the lake.",
-    "lovely": "Create an adventurous story about discovering a hidden treasure.",
-    "angry": "Write a dramatic story about someone overcoming anger.",
-    "crying": "Tell a touching story about someone finding hope in sadness.",
+    "smile": "Write a joyful story. Give me the whole story without asking me any questions.",
+    "neutral": "Describe a peaceful evening by the lake. Give me the whole story without asking me any questions.",
+    "lovely": "Create an adventurous story about discovering a hidden treasure. Give me the whole story without asking me any questions.",
+    "angry": "Write a dramatic story about someone overcoming anger. Give me the whole story without asking me any questions.",
+    "crying": "Tell a touching story about someone finding hope in sadness. Give me the whole story without asking me any questions.",
 }
 
 def generate_story(prompt):
