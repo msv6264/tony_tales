@@ -13,7 +13,9 @@ export default function SecPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedVoice, setSelectedVoice] = useState(null);
+  const [voices, setVoices] = useState([]);
   const [isDisabled, setIsDisabled] = useState(false);
+  const utteranceRef = useRef(null);
 
   // Fetching story from backend
   useEffect(() => {
@@ -38,52 +40,65 @@ export default function SecPage() {
       .finally(() => setLoading(false));
   }, [mood]);
 
-  // Loading voices and set default
-  useEffect(() => {
-    const synth = window.speechSynthesis;
-
-    const loadVoices = () => {
-      const voices = synth.getVoices(); // fetching all voices
-      if (voices.length > 0) { //if we get some voices
-        const preferred = voices.find((v) => v.lang.startsWith("en") && v.name.includes("Google")) || voices[0]; // prefered voice will be google and englih language
-        setSelectedVoice(preferred);
-      }
-    };
-
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = loadVoices;
-    }
-
-    loadVoices(); 
-  }, []);
-
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
     };
   }, []);
 
+  useEffect(() => {
+    const loadVoices = () => {
+      const allVoices = window.speechSynthesis.getVoices();
+      if (allVoices.length > 0) {
+        setVoices(allVoices);
+        const googleVoice = allVoices.find(
+          (v) => v.name === "Google UK English Female"
+        );
+        setSelectedVoice(googleVoice || allVoices[0]); // Google UK English Female is a standard voice we want either that or any other voice
+      }
+    };
+  
+    loadVoices(); // first attempt
+  
+    // Chrome loads voices asynchronously
+    if (typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined") {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);  
+
   const handleNarration = () => {
+    if (!selectedVoice) {
+      alert("Voices not loaded yet. Please try again in a second.");
+      return;
+    }
+    if(selectedVoice){ console.log(selectedVoice)}
+  
     setIsDisabled(true);
     setIsPaused(false);
   
-    if (!isPlaying && generated && story && selectedVoice) {
+    if (!isPlaying && generated && story) {
       const utterance = new SpeechSynthesisUtterance(story);
       utterance.voice = selectedVoice;
       utterance.lang = selectedVoice.lang;
       utterance.rate = 1;
       utterance.pitch = 1;
+      utteranceRef.current = utterance;
   
       utterance.onend = () => {
         setIsPlaying(false);
         console.log("Speech finished.");
       };
-
+  
       utterance.onerror = (e) => {
         console.error("Speech error:", e.error);
         setIsPlaying(false);
       };
-
+  
+      window.speechSynthesis.cancel(); // cancel any ongoing speech
       window.speechSynthesis.speak(utterance);
       setIsPlaying(true);
       console.log("Speaking...");
@@ -93,6 +108,7 @@ export default function SecPage() {
       console.log("Stopped speaking.");
     }
   };
+  
 
   const handlePause = () => {
     window.speechSynthesis.resume();
@@ -109,9 +125,16 @@ export default function SecPage() {
   const handleClick = () => {
     window.speechSynthesis.cancel();
     utteranceRef.current = null;
+    setStory("");
     setIsPlaying(false);
-    navigate("/");
-  };
+    setIsPaused(false);
+    setGenerated(false);
+    setIsDisabled(false);
+  
+    setTimeout(() => {
+      navigate("/");
+    }, 100);
+  };  
 
   return (
     <div className="bg-[#e8dbec] w-full min-h-screen p-5">
@@ -131,7 +154,7 @@ export default function SecPage() {
 
       <div className="flex flex-col small:flex-row justify-center items-center gap-2 small:gap-32 w-full mt-4">
         <div
-          className="text-white font-KottaOne bg-[#563c79] h-10 small:h-16 w-[140px] sm:h-[14] sm:w-[20%] ms:w-[15%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.3rem] hover:border-black transition duration-200 filter active:brightness-75"
+          className="text-white font-KottaOne bg-[#563c79] h-10 small:h-16 w-[140px] sm:h-[14] sm:w-[20%] ms:w-[15%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75"
           onClick={handleClick}
         >
           Change mood
@@ -152,7 +175,7 @@ export default function SecPage() {
           className={`text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75
             ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}          
           onClick={() => {
-            if (story && !isDisabled) {
+            if (story && !isDisabled && selectedVoice) {
               handleNarration();
               setIsDisabled(true);
             }
