@@ -12,8 +12,6 @@ export default function SecPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedVoice, setSelectedVoice] = useState(null);
-  const [voices, setVoices] = useState([]);
   const [isDisabled, setIsDisabled] = useState(false);
   const utteranceRef = useRef(null);
 
@@ -46,66 +44,39 @@ export default function SecPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const loadVoices = () => {
-      const allVoices = window.speechSynthesis.getVoices();
-      if (allVoices.length > 0) {
-        setVoices(allVoices);
-        const googleVoice = allVoices.find(
-          (v) => v.name === "Google UK English Female"
-        );
-        setSelectedVoice(googleVoice || allVoices[0]); // Google UK English Female is a standard voice we want either that or any other voice
-      }
-    };
-  
-    loadVoices(); // first attempt
-  
-    // Chrome loads voices asynchronously
-    if (typeof window !== "undefined" && typeof window.speechSynthesis !== "undefined") {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
-    }
-  
-    return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-    };
-  }, []);  
-
   const handleNarration = () => {
-    if (!selectedVoice) {
-      alert("Voices not loaded yet. Please try again in a second.");
+    if(!story || !generated){
+      alert("Story not yet generated, please wait !!");
       return;
     }
-    if(selectedVoice){ console.log(selectedVoice)}
-  
+
     setIsDisabled(true);
     setIsPaused(false);
-  
-    if (!isPlaying && generated && story) {
+
+    if(!isPlaying){
       const utterance = new SpeechSynthesisUtterance(story);
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice.lang;
       utterance.rate = 1;
       utterance.pitch = 1;
       utteranceRef.current = utterance;
-  
-      utterance.onend = () => {
+
+      utterance.onend = (e) => {
         setIsPlaying(false);
-        console.log("Speech finished.");
-      };
-  
+        console.log("Speech finished");
+      }
+
       utterance.onerror = (e) => {
-        console.error("Speech error:", e.error);
         setIsPlaying(false);
-      };
-  
-      window.speechSynthesis.cancel(); // cancel any ongoing speech
+        console.log("Error " + e.error + " occured");
+      }
+
+      window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
       setIsPlaying(true);
-      console.log("Speaking...");
+      console.log("Speaking..");
     } else {
       window.speechSynthesis.cancel();
       setIsPlaying(false);
-      console.log("Stopped speaking.");
+      console.log("Stopped speaking..");
     }
   };
   
@@ -175,7 +146,7 @@ export default function SecPage() {
           className={`text-white font-KottaOne p-2 bg-[#563c79] h-10 small:h-16 w-[190px] sm:w-[24%] ms:w-[23%] flex gap-5 justify-center cursor-pointer items-center mt-[2%] rounded-[15px] hover:border-[3px] ms:text-[1.5rem] hover:border-black transition duration-200 filter active:brightness-75
             ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}          
           onClick={() => {
-            if (story && !isDisabled && selectedVoice) {
+            if (story && !isDisabled) {
               handleNarration();
               setIsDisabled(true);
             }
