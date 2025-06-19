@@ -17,7 +17,9 @@ export default function SecPage() {
 
   // Fetching story from backend
   useEffect(() => {
-    const apiUrl = "http://localhost:5000/data";
+    const apiUrl = "http://127.0.0.1:5000/data";
+    //local host url: http://127.0.0.1:5000/data
+    // public url: https://your-backend-app.onrender.com/data
 
     fetch(apiUrl, {
       method: "POST", //we are not only requesting data but also sending some
