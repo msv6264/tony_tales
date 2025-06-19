@@ -31,13 +31,28 @@ def generate_story(prompt):
     )
     return response.generations[0].text.strip()
 
+# @app.route('/data', methods=["POST"])
+# def sending():
+#     data = request.get_json()
+#     emoji = data.get("emojiName", "")
+#     input_prompt = mood_prompts.get(emoji, "Write a story.")
+#     story = generate_story(input_prompt)
+#     return jsonify({"Story": story})
+
 @app.route('/data', methods=["POST"])
 def sending():
-    data = request.get_json()
-    emoji = data.get("emojiName", "")
-    input_prompt = mood_prompts.get(emoji, "Write a story.")
-    story = generate_story(input_prompt)
-    return jsonify({"Story": story})
+    try:
+        data = request.get_json()
+        print("Received JSON:", data)
+
+        emoji = data.get("emojiName", "")
+        input_prompt = mood_prompts.get(emoji, "Write a story.")
+        story = generate_story(input_prompt)
+
+        return jsonify({"Story": story})
+    except Exception as e:
+        print("Error occurred:", e)
+        return jsonify({"error": "Something went wrong"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
