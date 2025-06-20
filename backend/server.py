@@ -57,6 +57,9 @@ def sending():
         print("Exception occurred:", e)
         return jsonify({"error": str(e)}), 500
 
+@app.route('/')
+def home():
+    return "✅ Tony Tales Flask backend is running!"
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# if __name__ == "__main__":
+#     app.run(debug=True)

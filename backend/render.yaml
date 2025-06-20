@@ -3,7 +3,7 @@ services:
     name: resume-genie-backend
     runtime: python
     buildCommand: ""
-    startCommand: gunicorn app:app
+    startCommand: gunicorn server:app
     envVars:
       - key: FLASK_ENV
         value: production
