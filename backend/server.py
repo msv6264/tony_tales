@@ -61,5 +61,5 @@ def sending():
 def home():
     return "✅ Tony Tales Flask backend is running!"
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
