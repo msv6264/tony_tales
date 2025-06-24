@@ -15,11 +15,15 @@ export default function SecPage() {
   const [isDisabled, setIsDisabled] = useState(false);
   const utteranceRef = useRef(null);
 
+  const isLocal = true; // change to false on production
+
   // Fetching story from backend
   useEffect(() => {
-    const apiUrl = `${process.env.REACT_APP_API_URL}/data`;
+    const apiUrl = isLocal
+    ? "http://127.0.0.1:5000/data"
+    : "https://tony-tales.onrender.com/data";
     //local host url: http://127.0.0.1:5000/data
-    // public url: https://your-backend-app.onrender.com/data
+    // public url: https://tony-tales.onrender.com
 
     fetch(apiUrl, {
       method: "POST", //we are not only requesting data but also sending some
