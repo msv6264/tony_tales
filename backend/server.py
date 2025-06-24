@@ -31,13 +31,6 @@ def generate_story(prompt):
     )
     return response.generations[0].text.strip()
 
-def sending():
-    data = request.get_json()
-    emoji = data.get("emojiName", "")
-    input_prompt = mood_prompts.get(emoji, "Write a story.")
-    story = generate_story(input_prompt)
-    return jsonify({"Story": story})
-
 @app.route('/data', methods=["POST"])
 def sending():
     try:
