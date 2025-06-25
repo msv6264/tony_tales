@@ -19,9 +19,7 @@ export default function SecPage() {
 
   // Fetching story from backend
   useEffect(() => {
-    const apiUrl = isLocal
-    ? "http://127.0.0.1:5000/data"
-    : "https://tony-tales.onrender.com/data";
+    const apiUrl = "https://tony-tales.onrender.com/data";
     //local host url: http://127.0.0.1:5000/data
     // public url: https://tony-tales.onrender.com
 
