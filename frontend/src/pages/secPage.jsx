@@ -15,14 +15,9 @@ export default function SecPage() {
   const [isDisabled, setIsDisabled] = useState(false);
   const utteranceRef = useRef(null);
 
-  const isLocal = true; // change to false on production
-
   // Fetching story from backend
   useEffect(() => {
-    const apiUrl = "https://tony-tales.onrender.com/data";
-    //local host url: http://127.0.0.1:5000/data
-    // public url: https://tony-tales.onrender.com
-
+    const apiUrl = import.meta.env.VITE_APP_API_URL;
     fetch(apiUrl, {
       method: "POST", //we are not only requesting data but also sending some
       headers: {
