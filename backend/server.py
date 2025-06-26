@@ -13,7 +13,7 @@ app.secret_key = secrets.token_hex(16)
 key = os.getenv('COHERE_API_KEY')
 co = cohere.Client(key)
 
-CORS(app, origins=["https://tonytales-story-generator.onrender.com", "http://localhost:5173"])
+CORS(app, origins=["https://tonytales-story-generator.onrender.com"])
 
 mood_prompts = {
     "smile": "Write a joyful story. Give me the whole story without asking me any questions.",
