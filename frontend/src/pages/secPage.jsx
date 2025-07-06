@@ -35,6 +35,29 @@ export default function SecPage() {
         setStory("Oops! Couldn't load the story. Try again later.");
       })
       .finally(() => setLoading(false));
+    // fetch(apiUrl, {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({ emojiName: mood }),
+    // })
+    //   .then((res) => res.text()) 
+    //   .then((text) => {
+    //     try {
+    //       const data = JSON.parse(text);
+    //       setStory(data.Story);
+    //       setGenerated(true);
+    //     } catch (err) {
+    //       console.error("Failed to parse JSON. Raw response:", text);
+    //       setStory("Oops! Couldn't load the story. Try again later.");
+    //     }
+    //   })
+    //   .catch((err) => {
+    //     console.error("Error fetching story:", err);
+    //     setStory("Oops! Couldn't load the story. Try again later.");
+    //   })
+    //   .finally(() => setLoading(false));
   }, [mood]);
 
   useEffect(() => {

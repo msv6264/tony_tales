@@ -4,6 +4,6 @@ import react from '@vitejs/plugin-react'
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
   build: {
-    sourcemap: mode !== 'production', 
+    sourcemap: false, 
   },
 }))
