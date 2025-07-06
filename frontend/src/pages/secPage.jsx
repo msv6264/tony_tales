@@ -18,7 +18,7 @@ export default function SecPage() {
   // Fetching story from backend
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_APP_API_URL;
-    fetch(apiUrl, {
+    fetch(`${apiUrl}/data`, {
       method: "POST", //we are not only requesting data but also sending some
       headers: {
         "Content-Type": "application/json",
