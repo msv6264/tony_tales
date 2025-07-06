@@ -1,19 +1,16 @@
 import cohere
-import secrets
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from dotenv import load_dotenv 
-import os
-
-load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = secrets.token_hex(16)
 
-key = os.getenv('COHERE_API_KEY')
-co = cohere.Client(key)
+CORS(app, resources={r"/*": {"origins": [
+    "https://tonytales-story-generator.onrender.com",
+    "http://localhost:5173"
+]}})
 
-CORS(app, origins=["https://tonytales-story-generator.onrender.com"])
+co = cohere.Client(os.getenv('COHERE_API_KEY'))
 
 mood_prompts = {
     "smile": "Write a joyful story. Give me the whole story without asking me any questions.",
@@ -35,8 +32,6 @@ def generate_story(prompt):
 def sending():
     try:
         data = request.get_json()
-        print("Received JSON:", data)
-
         if not data or 'emojiName' not in data:
             return jsonify({"error": "Invalid input"}), 400
 
@@ -44,14 +39,9 @@ def sending():
         input_prompt = mood_prompts.get(emoji, "Write a story.")
         story = generate_story(input_prompt)
         return jsonify({"Story": story})
-
     except Exception as e:
-        print("Exception occurred:", e)
         return jsonify({"error": str(e)}), 500
 
 @app.route('/')
 def home():
     return "✅ Tony Tales Flask backend is running!"
-
-if __name__ == "__main__":
-    app.run(debug=True)
